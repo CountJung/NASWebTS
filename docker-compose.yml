@@ -1,0 +1,29 @@
+services:
+  backend:
+    build: ./backend
+    container_name: nas-backend
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./nas-storage:/app/nas-storage
+    environment:
+      - ROOT_PATH=./nas-storage
+      - PORT=4000
+    networks:
+      - nas-network
+    restart: always
+
+  frontend:
+    build: ./frontend
+    container_name: nas-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - nas-network
+    restart: always
+
+networks:
+  nas-network:
+    driver: bridge
