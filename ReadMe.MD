@@ -138,3 +138,26 @@ Next.js와 MUI를 사용하여 파일 탐색기 UI를 구현해줘.
   * 코드가 길어지면 \*\*"파일별로 나누어서 코드를 작성해줘"\*\*라고 요청하세요.
   * 에러가 발생하면 에러 로그를 그대로 복사해서 \*\*"이 에러의 원인과 해결 코드를 줘"\*\*라고 하세요.
   * 디자인이 마음에 안 들면 \*\*"MUI 스타일을 좀 더 모던하게, 그림자 효과를 주고 간격을 넓혀줘"\*\*라고 구체적으로 지시하세요.
+
+-----
+
+## 5\. ✅ Implemented Features (Current Status)
+
+### 🎨 UI/UX
+- **Theme System:**
+  - Light / Dark / System 모드 지원.
+  - `next-themes` 기반의 테마 지속성 관리.
+- **File Explorer:**
+  - **Drag-to-Select:** 마우스 드래그를 통한 다중 파일 선택 기능 (Ctrl/Cmd 키 조합 지원).
+  - **View Modes:** Grid 뷰와 List 뷰 전환 지원.
+  - **Korean Support:** 한글 파일명 깨짐 방지 및 완벽 지원.
+  - **Interactions:** Hover 효과, 우클릭 메뉴, 더블 클릭 탐색.
+
+### 🛠 Backend & System
+- **File Operations:**
+  - Upload (Drag & Drop), Download, Rename, Delete.
+  - **Trash Bin:** 휴지통 기능 (복구/영구 삭제).
+  - **Recent Files:** 최근 접근/생성된 파일 목록.
+- **Logging & Maintenance:**
+  - **Winston Logger:** Frontend(Server-side) 및 Backend 로그 파일 저장 (`logs/` 디렉토리).
+  - **Auto Cleanup:** 스케줄러(Cron)를 통한 10일 이상 된 로그 파일 자동 삭제 (1시간 주기 점검).
