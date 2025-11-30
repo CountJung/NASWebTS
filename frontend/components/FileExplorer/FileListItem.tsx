@@ -74,6 +74,8 @@ export default function FileListItem({
 
   return (
     <TableRow
+      className="selectable-item"
+      data-id={file.name}
       hover
       onClick={handleClick}
       onDoubleClick={handleDoubleClick}

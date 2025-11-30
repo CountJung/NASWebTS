@@ -73,6 +73,8 @@ export default function FileGridItem({
 
   return (
     <Card 
+      className="selectable-item"
+      data-id={file.name}
       sx={{ 
         cursor: 'pointer', 
         bgcolor: 'background.paper',

@@ -31,6 +31,7 @@ import FileListItem from './FileListItem';
 import BreadcrumbsNav from './BreadcrumbsNav';
 import CreateFolderDialog from './CreateFolderDialog';
 import ConfirmDialog from './ConfirmDialog';
+import { useDragSelect } from '@/hooks/useDragSelect';
 
 interface FileExplorerProps {
   mode?: 'files' | 'recent' | 'trash';
@@ -53,6 +54,31 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
   const [renameDialogOpen, setRenameDialogOpen] = React.useState(false);
   const [fileToRename, setFileToRename] = React.useState<FileInfo | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [dragStartSelection, setDragStartSelection] = React.useState<Set<string>>(new Set());
+  const [isDragAdding, setIsDragAdding] = React.useState(false);
+
+  const { isSelecting, selectionBox, handleMouseDown: handleDragMouseDown } = useDragSelect(containerRef, {
+    onSelectionChange: (dragSelection) => {
+      if (isDragAdding) {
+        setSelectedFiles(new Set([...dragStartSelection, ...dragSelection]));
+      } else {
+        setSelectedFiles(dragSelection);
+      }
+    },
+    onDragStart: (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        setIsDragAdding(true);
+        setDragStartSelection(selectedFiles);
+      } else {
+        setIsDragAdding(false);
+        setDragStartSelection(new Set());
+        setSelectedFiles(new Set());
+      }
+    },
+    itemSelector: '.selectable-item'
+  });
 
   const { data: files, isLoading, error } = useQuery<FileInfo[]>({
     queryKey: ['files', mode, currentPath],
@@ -308,8 +334,20 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
     }
   };
 
+  const { ref: dropzoneRef, ...rootProps } = getRootProps({
+    onMouseDown: handleDragMouseDown
+  }) as any;
+
   return (
-    <Box {...getRootProps()} sx={{ minHeight: 'calc(100vh - 100px)', position: 'relative' }}>
+    <Box 
+      {...rootProps}
+      ref={(node: HTMLDivElement | null) => {
+        containerRef.current = node;
+        if (typeof dropzoneRef === 'function') dropzoneRef(node);
+        else if (dropzoneRef) (dropzoneRef as any).current = node;
+      }}
+      sx={{ minHeight: 'calc(100vh - 100px)', position: 'relative' }}
+    >
       <input {...getInputProps()} />
       <input 
         type="file" 
@@ -319,6 +357,22 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
         onChange={handleFileInputChange} 
       />
       
+      {isSelecting && selectionBox && (
+        <Box
+          sx={{
+            position: 'absolute',
+            left: selectionBox.left,
+            top: selectionBox.top,
+            width: selectionBox.width,
+            height: selectionBox.height,
+            border: '1px solid rgba(25, 118, 210, 0.5)',
+            backgroundColor: 'rgba(25, 118, 210, 0.1)',
+            pointerEvents: 'none',
+            zIndex: 9999,
+          }}
+        />
+      )}
+
       {isDragActive && mode === 'files' && (
         <Box
           sx={{
