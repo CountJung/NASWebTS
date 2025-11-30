@@ -4,14 +4,14 @@ import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import CircularProgress from "@mui/material/CircularProgress";
 
-export default function Home() {
+export default function TrashPage() {
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
-        File Explorer
+        Trash
       </Typography>
       <Suspense fallback={<Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>}>
-        <FileExplorer />
+        <FileExplorer mode="trash" />
       </Suspense>
     </Box>
   );

@@ -11,16 +11,30 @@ import IconButton from '@mui/material/IconButton';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
+import Checkbox from '@mui/material/Checkbox';
 import { FileInfo } from '@/types/file';
 
 interface FileGridItemProps {
   file: FileInfo;
-  onClick: (file: FileInfo) => void;
+  selected: boolean;
+  onSelect: (file: FileInfo, multi: boolean) => void;
+  onNavigate: (file: FileInfo) => void;
   onDelete: (file: FileInfo) => void;
   onRename: (file: FileInfo) => void;
+  onRestore?: (file: FileInfo) => void;
+  isTrash?: boolean;
 }
 
-export default function FileGridItem({ file, onClick, onDelete, onRename }: FileGridItemProps) {
+export default function FileGridItem({ 
+  file, 
+  selected, 
+  onSelect, 
+  onNavigate, 
+  onDelete, 
+  onRename,
+  onRestore,
+  isTrash
+}: FileGridItemProps) {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -44,21 +58,60 @@ export default function FileGridItem({ file, onClick, onDelete, onRename }: File
     onRename(file);
   };
 
+  const handleRestore = (event: React.MouseEvent<HTMLElement>) => {
+    handleClose(event);
+    if (onRestore) onRestore(file);
+  };
+
+  const handleClick = (event: React.MouseEvent) => {
+    onSelect(file, event.ctrlKey || event.metaKey);
+  };
+
+  const handleDoubleClick = (event: React.MouseEvent) => {
+    onNavigate(file);
+  };
+
   return (
     <Card 
       sx={{ 
         cursor: 'pointer', 
-        '&:hover': { bgcolor: 'action.hover' },
+        bgcolor: 'background.paper',
+        backgroundImage: (theme) => selected 
+          ? `linear-gradient(${theme.palette.action.selected}, ${theme.palette.action.selected})` 
+          : 'none',
+        '&:hover': { 
+          borderColor: 'primary.main',
+          backgroundImage: (theme) => selected 
+            ? `linear-gradient(${theme.palette.action.selected}, ${theme.palette.action.selected}), linear-gradient(${theme.palette.action.hover}, ${theme.palette.action.hover})`
+            : `linear-gradient(${theme.palette.action.hover}, ${theme.palette.action.hover})`
+        },
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         p: 2,
-        position: 'relative'
+        position: 'relative',
+        border: 1,
+        borderColor: selected ? 'primary.main' : 'divider'
       }}
-      onClick={() => onClick(file)}
+      onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
     >
+      <Checkbox
+        checked={selected}
+        onChange={(e) => onSelect(file, true)}
+        onClick={(e) => e.stopPropagation()}
+        sx={{ 
+          position: 'absolute', 
+          top: 4, 
+          left: 4,
+          display: selected ? 'flex' : 'none',
+          '.MuiCard-root:hover &': { display: 'flex' }
+        }}
+        size="small"
+      />
+
       <IconButton
         aria-label="more"
         id={`long-button-${file.name}`}
@@ -80,7 +133,11 @@ export default function FileGridItem({ file, onClick, onDelete, onRename }: File
         open={open}
         onClose={handleClose}
       >
-        <MenuItem onClick={handleRename}>Rename</MenuItem>
+        {isTrash ? (
+          <MenuItem onClick={handleRestore}>Restore</MenuItem>
+        ) : (
+          <MenuItem onClick={handleRename}>Rename</MenuItem>
+        )}
         <MenuItem onClick={handleDelete} sx={{ color: 'error.main' }}>Delete</MenuItem>
       </Menu>
 

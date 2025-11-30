@@ -9,23 +9,41 @@ import Skeleton from '@mui/material/Skeleton';
 import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
 import Button from '@mui/material/Button';
+import ButtonGroup from '@mui/material/ButtonGroup';
 import LinearProgress from '@mui/material/LinearProgress';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import DeleteIcon from '@mui/icons-material/Delete';
+import GridViewIcon from '@mui/icons-material/GridView';
+import ViewListIcon from '@mui/icons-material/ViewList';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import TableCell from '@mui/material/TableCell';
+import Paper from '@mui/material/Paper';
 import { useDropzone } from 'react-dropzone';
 import api from '@/lib/api';
 import { FileInfo } from '@/types/file';
 import FileGridItem from './FileGridItem';
+import FileListItem from './FileListItem';
 import BreadcrumbsNav from './BreadcrumbsNav';
 import CreateFolderDialog from './CreateFolderDialog';
 import ConfirmDialog from './ConfirmDialog';
 
-export default function FileExplorer() {
+interface FileExplorerProps {
+  mode?: 'files' | 'recent' | 'trash';
+}
+
+export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const currentPath = searchParams.get('path') || '/';
   const queryClient = useQueryClient();
   
+  const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
+  const [selectedFiles, setSelectedFiles] = React.useState<Set<string>>(new Set());
   const [errorOpen, setErrorOpen] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState('');
   const [createFolderOpen, setCreateFolderOpen] = React.useState(false);
@@ -34,22 +52,36 @@ export default function FileExplorer() {
   const [uploadProgress, setUploadProgress] = React.useState<number | null>(null);
   const [renameDialogOpen, setRenameDialogOpen] = React.useState(false);
   const [fileToRename, setFileToRename] = React.useState<FileInfo | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const { data: files, isLoading, error } = useQuery<FileInfo[]>({
-    queryKey: ['files', currentPath],
+    queryKey: ['files', mode, currentPath],
     queryFn: async () => {
-      const res = await api.get('/files', { params: { path: currentPath } });
-      return res.data;
+      if (mode === 'recent') {
+        const res = await api.get('/files/recent');
+        return res.data;
+      } else if (mode === 'trash') {
+        const res = await api.get('/files/trash');
+        return res.data;
+      } else {
+        const res = await api.get('/files', { params: { path: currentPath } });
+        return res.data;
+      }
     },
     retry: false,
   });
+
+  // Clear selection when path changes
+  React.useEffect(() => {
+    setSelectedFiles(new Set());
+  }, [currentPath, mode]);
 
   const createFolderMutation = useMutation({
     mutationFn: async (name: string) => {
       await api.post('/files/mkdir', { path: currentPath, name });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['files', currentPath] });
+      queryClient.invalidateQueries({ queryKey: ['files', mode, currentPath] });
     },
     onError: (error: any) => {
       setErrorMessage(error.response?.data?.message || 'Failed to create folder');
@@ -59,18 +91,56 @@ export default function FileExplorer() {
 
   const deleteFileMutation = useMutation({
     mutationFn: async (file: FileInfo) => {
-      const filePath = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
+      let filePath;
+      if (mode === 'trash') {
+        filePath = `/.trash/${file.name}`;
+      } else if (mode === 'recent') {
+         throw new Error("Cannot delete from Recent view yet");
+      } else {
+        filePath = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
+      }
       await api.delete('/files', { params: { path: filePath } });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['files', currentPath] });
+      queryClient.invalidateQueries({ queryKey: ['files', mode, currentPath] });
       setDeleteConfirmOpen(false);
       setFileToDelete(null);
+      // Remove from selection if it was selected
+      setSelectedFiles(prev => {
+        const next = new Set(prev);
+        // We don't know the name here easily if we just passed file object to mutation
+        // But we can invalidate queries which refreshes the list.
+        // Ideally we should remove deleted files from selection.
+        return next;
+      });
     },
     onError: (error: any) => {
       setErrorMessage(error.response?.data?.message || 'Failed to delete file');
       setErrorOpen(true);
     },
+  });
+
+  const deleteMultipleFilesMutation = useMutation({
+    mutationFn: async (filesToDelete: FileInfo[]) => {
+      // Execute sequentially or parallel
+      for (const file of filesToDelete) {
+        let filePath;
+        if (mode === 'trash') {
+          filePath = `/.trash/${file.name}`;
+        } else {
+          filePath = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
+        }
+        await api.delete('/files', { params: { path: filePath } });
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['files', mode, currentPath] });
+      setSelectedFiles(new Set());
+    },
+    onError: (error: any) => {
+      setErrorMessage(error.response?.data?.message || 'Failed to delete some files');
+      setErrorOpen(true);
+    }
   });
 
   const renameFileMutation = useMutation({
@@ -79,12 +149,25 @@ export default function FileExplorer() {
       await api.patch('/files/rename', { path: filePath, newName });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['files', currentPath] });
+      queryClient.invalidateQueries({ queryKey: ['files', mode, currentPath] });
       setRenameDialogOpen(false);
       setFileToRename(null);
     },
     onError: (error: any) => {
       setErrorMessage(error.response?.data?.message || 'Failed to rename file');
+      setErrorOpen(true);
+    },
+  });
+
+  const restoreFileMutation = useMutation({
+    mutationFn: async (file: FileInfo) => {
+      await api.post('/files/restore', { fileName: file.name });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['files', mode, currentPath] });
+    },
+    onError: (error: any) => {
+      setErrorMessage(error.response?.data?.message || 'Failed to restore file');
       setErrorOpen(true);
     },
   });
@@ -106,7 +189,7 @@ export default function FileExplorer() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['files', currentPath] });
+      queryClient.invalidateQueries({ queryKey: ['files', mode, currentPath] });
       setUploadProgress(null);
     },
     onError: (error: any) => {
@@ -117,15 +200,17 @@ export default function FileExplorer() {
   });
 
   const onDrop = React.useCallback((acceptedFiles: File[]) => {
+    if (mode !== 'files') return;
     acceptedFiles.forEach((file) => {
       uploadFileMutation.mutate(file);
     });
-  }, [uploadFileMutation]);
+  }, [uploadFileMutation, mode]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
     onDrop,
     noClick: true,
-    noKeyboard: true
+    noKeyboard: true,
+    disabled: mode !== 'files'
   });
 
   React.useEffect(() => {
@@ -136,38 +221,105 @@ export default function FileExplorer() {
   }, [error]);
 
   const handleNavigate = (path: string) => {
+    if (mode !== 'files') return; // Disable navigation in Recent/Trash for now
     router.push(`/?path=${encodeURIComponent(path)}`);
   };
 
-  const handleFileClick = async (file: FileInfo) => {
+  const handleFileSelect = (file: FileInfo, multi: boolean) => {
+    setSelectedFiles(prev => {
+      const newSet = new Set(multi ? prev : []);
+      if (newSet.has(file.name)) {
+        newSet.delete(file.name);
+      } else {
+        newSet.add(file.name);
+      }
+      return newSet;
+    });
+  };
+
+  const handleFileOpen = async (file: FileInfo) => {
     if (file.type === 'directory') {
-      const newPath = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
-      handleNavigate(newPath);
+      if (mode === 'files') {
+        const newPath = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
+        handleNavigate(newPath);
+      }
     } else {
-      const filePath = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
+      let filePath = '';
+      if (mode === 'files') {
+        filePath = currentPath === '/' ? `/${file.name}` : `${currentPath}/${file.name}`;
+      } else if (mode === 'trash') {
+        filePath = `/.trash/${file.name}`;
+      } else {
+        setErrorMessage("Cannot open file from Recent view (path missing)");
+        setErrorOpen(true);
+        return;
+      }
       window.open(`http://localhost:4000/api/files/download?path=${encodeURIComponent(filePath)}`, '_blank');
     }
   };
 
   const handleDeleteClick = (file: FileInfo) => {
+    if (mode === 'recent') return; 
     setFileToDelete(file);
     setDeleteConfirmOpen(true);
   };
 
+  const handleDeleteSelected = () => {
+    if (mode === 'recent') return;
+    if (selectedFiles.size === 0) return;
+    
+    // We need to find FileInfo objects for selected names
+    const filesToDelete = files?.filter(f => selectedFiles.has(f.name)) || [];
+    if (filesToDelete.length === 0) return;
+
+    if (confirm(`Are you sure you want to delete ${filesToDelete.length} items?`)) {
+      deleteMultipleFilesMutation.mutate(filesToDelete);
+    }
+  };
+
   const handleRenameClick = (file: FileInfo) => {
+    if (mode !== 'files') return; 
     setFileToRename(file);
     setRenameDialogOpen(true);
+  };
+
+  const handleRestoreClick = (file: FileInfo) => {
+    if (mode !== 'trash') return;
+    restoreFileMutation.mutate(file);
   };
 
   const handleCloseError = () => {
     setErrorOpen(false);
   };
 
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      Array.from(e.target.files).forEach(file => {
+        uploadFileMutation.mutate(file);
+      });
+    }
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   return (
     <Box {...getRootProps()} sx={{ minHeight: 'calc(100vh - 100px)', position: 'relative' }}>
       <input {...getInputProps()} />
+      <input 
+        type="file" 
+        multiple 
+        ref={fileInputRef} 
+        style={{ display: 'none' }} 
+        onChange={handleFileInputChange} 
+      />
       
-      {isDragActive && (
+      {isDragActive && mode === 'files' && (
         <Box
           sx={{
             position: 'absolute',
@@ -191,15 +343,61 @@ export default function FileExplorer() {
         </Box>
       )}
 
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <BreadcrumbsNav currentPath={currentPath} onNavigate={handleNavigate} />
-        <Button 
-          variant="contained" 
-          startIcon={<CreateNewFolderIcon />}
-          onClick={() => setCreateFolderOpen(true)}
-        >
-          New Folder
-        </Button>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, flexWrap: 'wrap', gap: 2 }}>
+        <Box sx={{ flexGrow: 1 }}>
+          {mode === 'files' ? (
+            <BreadcrumbsNav currentPath={currentPath} onNavigate={handleNavigate} />
+          ) : (
+            <Box sx={{ typography: 'h6', textTransform: 'capitalize' }}>{mode}</Box>
+          )}
+        </Box>
+        
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {selectedFiles.size > 0 && mode !== 'recent' && (
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<DeleteIcon />}
+              onClick={handleDeleteSelected}
+            >
+              Delete ({selectedFiles.size})
+            </Button>
+          )}
+
+          <ButtonGroup variant="outlined" aria-label="view mode">
+            <Button 
+              variant={viewMode === 'grid' ? 'contained' : 'outlined'}
+              onClick={() => setViewMode('grid')}
+            >
+              <GridViewIcon />
+            </Button>
+            <Button 
+              variant={viewMode === 'list' ? 'contained' : 'outlined'}
+              onClick={() => setViewMode('list')}
+            >
+              <ViewListIcon />
+            </Button>
+          </ButtonGroup>
+
+          {mode === 'files' && (
+            <>
+              <Button 
+                variant="outlined" 
+                startIcon={<CloudUploadIcon />}
+                onClick={handleUploadClick}
+              >
+                Upload
+              </Button>
+              <Button 
+                variant="contained" 
+                startIcon={<CreateNewFolderIcon />}
+                onClick={() => setCreateFolderOpen(true)}
+              >
+                New Folder
+              </Button>
+            </>
+          )}
+        </Box>
       </Box>
 
       {uploadProgress !== null && (
@@ -211,30 +409,68 @@ export default function FileExplorer() {
       {isLoading ? (
         <Grid container spacing={2}>
           {[...Array(8)].map((_, i) => (
-            <Grid item xs={6} sm={4} md={3} lg={2} key={i}>
+            <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={i}>
               <Skeleton variant="rectangular" height={120} sx={{ borderRadius: 1 }} />
               <Skeleton width="60%" sx={{ mt: 1 }} />
             </Grid>
           ))}
         </Grid>
       ) : (
-        <Grid container spacing={2}>
-          {files?.map((file) => (
-            <Grid item xs={6} sm={4} md={3} lg={2} key={file.name}>
-              <FileGridItem 
-                file={file} 
-                onClick={handleFileClick} 
-                onDelete={handleDeleteClick}
-                onRename={handleRenameClick}
-              />
+        <>
+          {viewMode === 'grid' ? (
+            <Grid container spacing={2}>
+              {files?.map((file) => (
+                <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={file.name}>
+                  <FileGridItem 
+                    file={file} 
+                    selected={selectedFiles.has(file.name)}
+                    onSelect={handleFileSelect}
+                    onNavigate={handleFileOpen}
+                    onDelete={handleDeleteClick}
+                    onRename={handleRenameClick}
+                    onRestore={handleRestoreClick}
+                    isTrash={mode === 'trash'}
+                  />
+                </Grid>
+              ))}
             </Grid>
-          ))}
+          ) : (
+            <TableContainer component={Paper}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell padding="checkbox"></TableCell>
+                    <TableCell>Name</TableCell>
+                    <TableCell align="right">Size</TableCell>
+                    <TableCell align="right">Date</TableCell>
+                    <TableCell align="right" width={50}></TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {files?.map((file) => (
+                    <FileListItem
+                      key={file.name}
+                      file={file}
+                      selected={selectedFiles.has(file.name)}
+                      onSelect={handleFileSelect}
+                      onNavigate={handleFileOpen}
+                      onDelete={handleDeleteClick}
+                      onRename={handleRenameClick}
+                      onRestore={handleRestoreClick}
+                      isTrash={mode === 'trash'}
+                    />
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+          
           {files?.length === 0 && (
             <Box sx={{ p: 4, width: '100%', textAlign: 'center', color: 'text.secondary' }}>
               Folder is empty. Drag and drop files to upload.
             </Box>
           )}
-        </Grid>
+        </>
       )}
 
       <CreateFolderDialog 

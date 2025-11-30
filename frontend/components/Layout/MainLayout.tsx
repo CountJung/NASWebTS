@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { styled, useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -16,7 +17,16 @@ import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import FolderIcon from '@mui/icons-material/Folder';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import DeleteIcon from '@mui/icons-material/Delete';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import Brightness4Icon from '@mui/icons-material/Brightness4';
+import Brightness7Icon from '@mui/icons-material/Brightness7';
+import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Tooltip from '@mui/material/Tooltip';
+import { useColorMode } from '../ThemeRegistry/ColorModeContext';
 
 const drawerWidth = 240;
 
@@ -25,6 +35,8 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
 }>(({ theme }) => ({
   flexGrow: 1,
   padding: theme.spacing(3),
+  backgroundColor: theme.palette.background.default,
+  minHeight: '100vh',
   transition: theme.transitions.create('margin', {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
@@ -37,12 +49,42 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const theme = useTheme();
+  const router = useRouter();
+  const pathname = usePathname();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const { mode, setMode } = useColorMode();
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const openMenu = Boolean(anchorEl);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
+
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleModeChange = (newMode: 'light' | 'dark' | 'system') => {
+    setMode(newMode);
+    handleMenuClose();
+  };
+
+  const getIcon = () => {
+    if (mode === 'dark') return <Brightness4Icon />;
+    if (mode === 'light') return <Brightness7Icon />;
+    return <SettingsBrightnessIcon />;
+  };
+
+  const menuItems = [
+    { text: 'Files', icon: <FolderIcon />, path: '/' },
+    { text: 'Recent', icon: <AccessTimeIcon />, path: '/recent' },
+    { text: 'Trash', icon: <DeleteIcon />, path: '/trash' },
+  ];
 
   const drawerContent = (
     <div>
@@ -53,13 +95,19 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       </Toolbar>
       <Divider />
       <List>
-        {['Files', 'Recent', 'Trash'].map((text, index) => (
-          <ListItem key={text} disablePadding>
-            <ListItemButton>
+        {menuItems.map((item) => (
+          <ListItem key={item.text} disablePadding>
+            <ListItemButton 
+              selected={pathname === item.path}
+              onClick={() => {
+                router.push(item.path);
+                if (!isDesktop) setMobileOpen(false);
+              }}
+            >
               <ListItemIcon>
-                <FolderIcon />
+                {item.icon}
               </ListItemIcon>
-              <ListItemText primary={text} />
+              <ListItemText primary={item.text} />
             </ListItemButton>
           </ListItem>
         ))}
@@ -86,9 +134,33 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
+          <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
             Dashboard
           </Typography>
+          
+          <Tooltip title="Theme Settings">
+            <IconButton onClick={handleMenuClick} color="inherit">
+              {getIcon()}
+            </IconButton>
+          </Tooltip>
+          <Menu
+            anchorEl={anchorEl}
+            open={openMenu}
+            onClose={handleMenuClose}
+          >
+            <MenuItem onClick={() => handleModeChange('light')} selected={mode === 'light'}>
+              <ListItemIcon><Brightness7Icon fontSize="small" /></ListItemIcon>
+              Light
+            </MenuItem>
+            <MenuItem onClick={() => handleModeChange('dark')} selected={mode === 'dark'}>
+              <ListItemIcon><Brightness4Icon fontSize="small" /></ListItemIcon>
+              Dark
+            </MenuItem>
+            <MenuItem onClick={() => handleModeChange('system')} selected={mode === 'system'}>
+              <ListItemIcon><SettingsBrightnessIcon fontSize="small" /></ListItemIcon>
+              System
+            </MenuItem>
+          </Menu>
         </Toolbar>
       </AppBar>
       
