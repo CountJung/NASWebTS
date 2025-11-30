@@ -58,6 +58,11 @@ export class FilesController {
     return this.filesService.restoreFile(body.fileName);
   }
 
+  @Post('restore-multiple')
+  async restoreMultipleFiles(@Body() body: { fileNames: string[] }) {
+    return this.filesService.restoreMultipleFiles(body.fileNames);
+  }
+
   @Delete()
   async deleteFile(@Query('path') path: string) {
     return this.filesService.deleteFile(path);

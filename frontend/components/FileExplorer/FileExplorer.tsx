@@ -15,6 +15,7 @@ import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
 import DownloadIcon from '@mui/icons-material/Download';
+import RestoreFromTrashIcon from '@mui/icons-material/RestoreFromTrash';
 import GridViewIcon from '@mui/icons-material/GridView';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import Table from '@mui/material/Table';
@@ -199,6 +200,21 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
     },
   });
 
+  const restoreMultipleFilesMutation = useMutation({
+    mutationFn: async (filesToRestore: FileInfo[]) => {
+      const fileNames = filesToRestore.map(f => f.name);
+      await api.post('/files/restore-multiple', { fileNames });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['files', mode, currentPath] });
+      setSelectedFiles(new Set());
+    },
+    onError: (error: any) => {
+      setErrorMessage(error.response?.data?.message || 'Failed to restore some files');
+      setErrorOpen(true);
+    }
+  });
+
   const uploadFileMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
@@ -360,6 +376,18 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
     setRenameDialogOpen(true);
   };
 
+  const handleRestoreSelected = () => {
+    if (mode !== 'trash') return;
+    if (selectedFiles.size === 0) return;
+
+    const filesToRestore = files?.filter(f => selectedFiles.has(f.name)) || [];
+    if (filesToRestore.length === 0) return;
+
+    if (confirm(`Are you sure you want to restore ${filesToRestore.length} items?`)) {
+      restoreMultipleFilesMutation.mutate(filesToRestore);
+    }
+  };
+
   const handleRestoreClick = (file: FileInfo) => {
     if (mode !== 'trash') return;
     restoreFileMutation.mutate(file);
@@ -460,6 +488,15 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
         <Box sx={{ display: 'flex', gap: 1 }}>
           {selectedFiles.size > 0 && mode !== 'recent' && (
             <>
+              {mode === 'trash' && (
+                <Button
+                  variant="outlined"
+                  startIcon={<RestoreFromTrashIcon />}
+                  onClick={handleRestoreSelected}
+                >
+                  Restore ({selectedFiles.size})
+                </Button>
+              )}
               <Button
                 variant="outlined"
                 startIcon={<DownloadIcon />}

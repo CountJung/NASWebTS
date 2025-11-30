@@ -180,6 +180,17 @@ export class FilesService {
     }
   }
 
+  async restoreMultipleFiles(fileNames: string[]): Promise<void> {
+    for (const fileName of fileNames) {
+      try {
+        await this.restoreFile(fileName);
+      } catch (error) {
+        console.error(`Failed to restore file ${fileName}:`, error);
+        // Continue restoring other files even if one fails
+      }
+    }
+  }
+
   async deleteFile(userPath: string): Promise<void> {
     const fullPath = this.validatePath(userPath);
 
