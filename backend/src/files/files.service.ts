@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { createReadStream, existsSync, statSync } from 'fs';
+import archiver from 'archiver';
 
 export interface FileInfo {
   name: string;
@@ -288,6 +289,52 @@ export class FilesService {
       stream: new StreamableFile(fileStream),
       fileName: path.basename(fullPath),
       size: stats.size,
+    };
+  }
+
+  async downloadMultipleFiles(userPaths: string[]): Promise<{ stream: archiver.Archiver; fileName: string }> {
+    const archive = archiver('zip', {
+      zlib: { level: 9 },
+    });
+
+    archive.on('error', (err) => {
+      console.error('Archiver error:', err);
+    });
+
+    archive.on('warning', (err) => {
+      if (err.code === 'ENOENT') {
+        console.warn('Archiver warning:', err);
+      } else {
+        console.error('Archiver error:', err);
+      }
+    });
+
+    for (const userPath of userPaths) {
+      try {
+        const fullPath = this.validatePath(userPath);
+        if (!existsSync(fullPath)) {
+          console.warn(`File not found for download: ${fullPath}`);
+          continue;
+        }
+
+        const stats = statSync(fullPath);
+        if (stats.isDirectory()) {
+          console.log(`Adding directory to archive: ${fullPath}`);
+          archive.directory(fullPath, path.basename(fullPath));
+        } else {
+          console.log(`Adding file to archive: ${fullPath}`);
+          archive.file(fullPath, { name: path.basename(fullPath) });
+        }
+      } catch (error) {
+        console.error(`Error processing path ${userPath}:`, error);
+      }
+    }
+
+    archive.finalize();
+
+    return {
+      stream: archive,
+      fileName: `download_${new Date().getTime()}.zip`,
     };
   }
 

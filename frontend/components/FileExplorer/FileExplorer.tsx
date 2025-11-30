@@ -14,6 +14,7 @@ import LinearProgress from '@mui/material/LinearProgress';
 import CreateNewFolderIcon from '@mui/icons-material/CreateNewFolder';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DownloadIcon from '@mui/icons-material/Download';
 import GridViewIcon from '@mui/icons-material/GridView';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import Table from '@mui/material/Table';
@@ -290,6 +291,56 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
     setDeleteConfirmOpen(true);
   };
 
+  const handleDownloadSelected = async () => {
+    if (selectedFiles.size === 0) return;
+
+    const filesToDownload = files?.filter(f => selectedFiles.has(f.name)) || [];
+    if (filesToDownload.length === 0) return;
+
+    // If single file and it's not a directory, download directly
+    if (filesToDownload.length === 1 && filesToDownload[0].type === 'file') {
+      handleFileOpen(filesToDownload[0]);
+      return;
+    }
+
+    // Otherwise (multiple files or single directory), download as zip
+    const paths = filesToDownload.map(f => {
+      if (mode === 'trash') {
+        return `/.trash/${f.name}`;
+      }
+      return currentPath === '/' ? `/${f.name}` : `${currentPath}/${f.name}`;
+    });
+
+    console.log('Requesting download for paths:', paths);
+
+    try {
+      const response = await api.post('/files/download-multiple', { paths }, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      
+      const contentDisposition = response.headers['content-disposition'];
+      let fileName = `download_${new Date().getTime()}.zip`;
+      if (contentDisposition) {
+        const fileNameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (fileNameMatch && fileNameMatch.length === 2)
+          fileName = fileNameMatch[1];
+      }
+      
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Download failed:', error);
+      setErrorMessage('Failed to download files');
+      setErrorOpen(true);
+    }
+  };
+
   const handleDeleteSelected = () => {
     if (mode === 'recent') return;
     if (selectedFiles.size === 0) return;
@@ -408,14 +459,23 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
         
         <Box sx={{ display: 'flex', gap: 1 }}>
           {selectedFiles.size > 0 && mode !== 'recent' && (
-            <Button
-              variant="outlined"
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={handleDeleteSelected}
-            >
-              Delete ({selectedFiles.size})
-            </Button>
+            <>
+              <Button
+                variant="outlined"
+                startIcon={<DownloadIcon />}
+                onClick={handleDownloadSelected}
+              >
+                Download ({selectedFiles.size})
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={handleDeleteSelected}
+              >
+                Delete ({selectedFiles.size})
+              </Button>
+            </>
           )}
 
           <ButtonGroup variant="outlined" aria-label="view mode">

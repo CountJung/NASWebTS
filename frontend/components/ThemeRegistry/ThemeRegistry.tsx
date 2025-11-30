@@ -10,7 +10,7 @@ import { ColorModeContext, ColorMode } from './ColorModeContext';
 export default function ThemeRegistry({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = React.useState<ColorMode>('system');
   const [mounted, setMounted] = React.useState(false);
-  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)');
+  const prefersDarkMode = useMediaQuery('(prefers-color-scheme: dark)', { noSsr: true });
 
   React.useEffect(() => {
     setMounted(true);

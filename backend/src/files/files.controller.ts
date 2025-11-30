@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Res, Post, Body, Delete, UseInterceptors, UploadedFile, Patch } from '@nestjs/common';
+import { Controller, Get, Query, Res, Post, Body, Delete, UseInterceptors, UploadedFile, Patch, StreamableFile } from '@nestjs/common';
 import { FilesService } from './files.service';
 import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -33,6 +33,19 @@ export class FilesController {
     });
 
     return stream;
+  }
+
+  @Post('download-multiple')
+  async downloadMultipleFiles(@Body() body: { paths: string[] }, @Res({ passthrough: true }) res: Response) {
+    console.log('Received download-multiple request with paths:', body.paths);
+    const { stream, fileName } = await this.filesService.downloadMultipleFiles(body.paths);
+
+    res.set({
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="${fileName}"`,
+    });
+
+    return new StreamableFile(stream);
   }
 
   @Post('mkdir')
