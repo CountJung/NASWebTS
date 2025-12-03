@@ -22,7 +22,7 @@ export default function BreadcrumbsNav({ currentPath, onNavigate }: BreadcrumbsN
         <Link
           underline="hover"
           sx={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}
-          color="inherit"
+          color="text.primary"
           onClick={() => onNavigate('/')}
         >
           <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />

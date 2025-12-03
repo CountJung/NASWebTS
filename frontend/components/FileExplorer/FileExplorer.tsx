@@ -493,6 +493,8 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
                   variant="outlined"
                   startIcon={<RestoreFromTrashIcon />}
                   onClick={handleRestoreSelected}
+                  color="inherit"
+                  sx={{ borderColor: 'text.primary' }}
                 >
                   Restore ({selectedFiles.size})
                 </Button>
@@ -501,6 +503,8 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
                 variant="outlined"
                 startIcon={<DownloadIcon />}
                 onClick={handleDownloadSelected}
+                color="inherit"
+                sx={{ borderColor: 'text.primary' }}
               >
                 Download ({selectedFiles.size})
               </Button>
@@ -536,6 +540,8 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
                 variant="outlined" 
                 startIcon={<CloudUploadIcon />}
                 onClick={handleUploadClick}
+                color="inherit"
+                sx={{ borderColor: 'text.primary' }}
               >
                 Upload
               </Button>
