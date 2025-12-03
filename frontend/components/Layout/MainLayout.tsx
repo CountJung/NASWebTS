@@ -30,23 +30,6 @@ import { useColorMode } from '../ThemeRegistry/ColorModeContext';
 
 const drawerWidth = 240;
 
-const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })<{
-  open?: boolean;
-}>(({ theme }) => ({
-  flexGrow: 1,
-  padding: theme.spacing(3),
-  backgroundColor: theme.palette.background.default,
-  minHeight: '100vh',
-  transition: theme.transitions.create('margin', {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
-  marginLeft: 0, // On mobile or when drawer is temporary, margin is 0
-  [theme.breakpoints.up('md')]: {
-      marginLeft: `${drawerWidth}px`, // Fixed drawer on desktop
-  }
-}));
-
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const theme = useTheme();
   const router = useRouter();
@@ -204,7 +187,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
       <Box
         component="main"
-        sx={{ flexGrow: 1, p: 3, width: { md: `calc(100% - ${drawerWidth}px)` } }}
+        sx={{ 
+          flexGrow: 1, 
+          p: 3, 
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          bgcolor: 'background.default',
+          color: 'text.primary',
+          minHeight: '100vh'
+        }}
       >
         <Toolbar /> {/* Spacer for AppBar */}
         {children}

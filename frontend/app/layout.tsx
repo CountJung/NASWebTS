@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "./globals.css";
 import ThemeRegistry from "@/components/ThemeRegistry/ThemeRegistry";
 import MainLayout from "@/components/Layout/MainLayout";
 import Providers from "./providers";
