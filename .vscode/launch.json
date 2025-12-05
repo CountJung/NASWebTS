@@ -21,12 +21,19 @@
       "runtimeArgs": ["run-script", "dev"],
       "skipFiles": ["<node_internals>/**"],
       "console": "integratedTerminal"
+    },
+    {
+      "name": "Chrome Debug (Next.js)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceFolder}"
     }
   ],
   "compounds": [
     { 
       "name": "Full Debug",
-      "configurations": ["Debug Backend (NestJS)", "Debug Frontend (Next.js)"]
+      "configurations": ["Debug Backend (NestJS)", "Debug Frontend (Next.js)", "Chrome Debug (Next.js)"]
     }
   ]
 }

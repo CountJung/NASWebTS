@@ -1,5 +1,5 @@
 'use client';
-import { ThemeOptions } from '@mui/material/styles';
+import { experimental_extendTheme as extendTheme } from '@mui/material/styles';
 import { Roboto } from 'next/font/google';
 
 const roboto = Roboto({
@@ -8,17 +8,27 @@ const roboto = Roboto({
   display: 'swap',
 });
 
-export const getThemeOptions = (mode: 'light' | 'dark'): ThemeOptions => ({
+export const theme = extendTheme({
+  colorSchemeSelector: 'class',
   typography: {
     fontFamily: roboto.style.fontFamily,
   },
-  palette: {
-    mode,
-    ...(mode === 'dark' && {
-      background: {
-        default: '#121212',
-        paper: '#1e1e1e',
+  colorSchemes: {
+    light: {
+      palette: {
+        background: {
+          default: '#ffffff',
+          paper: '#ffffff',
+        },
       },
-    }),
+    },
+    dark: {
+      palette: {
+        background: {
+          default: '#121212',
+          paper: '#1e1e1e',
+        },
+      },
+    },
   },
 });

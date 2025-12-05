@@ -26,7 +26,7 @@ import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';
-import { useColorMode } from '../ThemeRegistry/ColorModeContext';
+import { useColorScheme } from '@mui/material/styles';
 
 const drawerWidth = 240;
 
@@ -36,7 +36,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const { mode, setMode } = useColorMode();
+  const { mode, setMode } = useColorScheme();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
 
