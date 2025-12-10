@@ -521,12 +521,14 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
 
           <ButtonGroup variant="outlined" aria-label="view mode">
             <Button 
+              color="primary"
               variant={viewMode === 'grid' ? 'contained' : 'outlined'}
               onClick={() => setViewMode('grid')}
             >
               <GridViewIcon />
             </Button>
             <Button 
+              color="primary"
               variant={viewMode === 'list' ? 'contained' : 'outlined'}
               onClick={() => setViewMode('list')}
             >
@@ -540,13 +542,14 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
                 variant="outlined" 
                 startIcon={<CloudUploadIcon />}
                 onClick={handleUploadClick}
-                color="inherit"
+                color="primary"
                 sx={{ borderColor: 'text.primary' }}
               >
                 Upload
               </Button>
               <Button 
                 variant="contained" 
+                color="primary"
                 startIcon={<CreateNewFolderIcon />}
                 onClick={() => setCreateFolderOpen(true)}
               >

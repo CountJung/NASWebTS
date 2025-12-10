@@ -43,7 +43,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const [mobileOpen, setMobileOpen] = React.useState(false);
-  const { mode, setMode } = useColorMode();
+  const { mode, setMode } = useColorScheme();
   const { user, login, logout } = useAuth();
   
   // Theme Menu State
