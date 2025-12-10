@@ -1,163 +1,129 @@
+# NASWebTS Project
 
------
+이 프로젝트는 Next.js(Frontend)와 NestJS(Backend)를 기반으로 구축된 웹 기반 NAS(Network Attached Storage) 파일 관리 시스템입니다.
+사용자 인증, 파일 탐색, 시스템 설정 및 로그 관리 기능을 제공합니다.
 
-# 📂 Project: Web NAS (Private Cloud Storage)
+## 🛠 기술 스택 (Tech Stack)
 
-이 문서는 **OS에 독립적**으로 동작하는 웹 기반 NAS 시스템을 구축하기 위한 AI 코딩 지침서입니다.
+### Frontend
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript
+- **UI Library**: Material UI (MUI) v6
+- **State Management**: React Context API (AuthContext)
+- **HTTP Client**: Axios
+- **Styling**: Emotion (MUI Default)
 
-## 0\. 🤖 Role Definition
+### Backend
+- **Framework**: NestJS
+- **Language**: TypeScript
+- **Authentication**: Passport (Google OAuth 2.0, JWT Strategy)
+- **Logging**: Winston (Daily Rotate File)
+- **Task Scheduling**: @nestjs/schedule (로그 정리 등)
+- **Configuration**: dotenv, env-cmd
 
-  * **Role:** Senior Full-Stack Developer (Specialized in TypeScript)
-  * **Goal:** Build a responsive, secure file management system using NestJS and Next.js.
-  * **Target Environment:** Docker (Linux/Windows/macOS agnostic)
+## ✨ 주요 기능 (Key Features)
 
-## 1\. 🛠 Tech Stack
+### 1. 사용자 인증 및 권한 관리 (Authentication & RBAC)
+- **Google OAuth 로그인**: 구글 계정을 연동한 로그인 지원.
+- **JWT 인증**: Access Token 기반의 API 보안 처리.
+- **사용자 역할(Role)**:
+  - `ADMIN`: 모든 기능 접근 가능 (사용자 관리, 시스템 설정 포함).
+  - `USER`: 파일 탐색 및 기본 기능 사용 가능.
+  - `GUEST`: 제한된 접근 권한.
+  - `BANNED`: 접속 차단.
+- **관리자 보호**: 환경 변수(`ADMIN_EMAILS`)에 등록된 이메일은 관리자 권한이 고정되어 삭제나 권한 변경이 불가능합니다.
 
-| Category | Technology |
-| :--- | :--- |
-| **Backend** | NestJS, TypeScript, Node.js `fs` module, Multer |
-| **Frontend** | Next.js 14+ (App Router), TypeScript, Axios |
-| **UI/Design** | **MUI (Material UI)** v5, Emotion |
-| **State/Query**| React Query (TanStack Query) or SWR (for file caching) |
-| **Infrastructure** | Docker, Docker Compose |
+### 2. 파일 관리 (File Management)
+- **파일 탐색기**: 디렉토리 구조 탐색, 파일 목록 조회 (Grid/List 뷰 지원).
+- **파일 작업**:
+  - 파일/폴더 생성
+  - 파일 업로드 및 다운로드
+  - 파일 삭제 (휴지통 이동 기능 포함)
+  - 최근 사용한 파일 조회 (`/recent`)
+  - 휴지통 관리 (`/trash`)
 
-## 2\. 📜 Global Rules & Coding Standards
+### 3. 시스템 설정 (System Configuration)
+- **포트 설정**: 관리자 페이지에서 프론트엔드 및 백엔드 서버 포트를 변경 가능.
+  - 변경 시 `.env` 및 `.env.local` 파일이 자동으로 업데이트됩니다.
+- **사용자 관리**: 관리자는 등록된 사용자의 목록을 조회하고, 역할을 변경하거나 삭제할 수 있습니다.
 
-1.  **OS Independence:** 파일 경로 처리 시 반드시 Node.js의 `path.join()`, `path.sep` 등을 사용하여 윈도우(\\)와 유닉스(/) 경로 차이를 해결한다.
-2.  **Security First:** `Path Traversal` 공격 방지를 위해, 요청된 경로가 반드시 지정된 `ROOT_DIR` 내부에 있는지 검증하는 로직을 필수적으로 포함한다.
-3.  **Responsive Design:** MUI의 `Grid`, `Box`, `useMediaQuery`를 활용하여 모바일(햄버거 메뉴)과 데스크탑(사이드바) 뷰를 완벽히 지원한다.
-4.  **Type Safety:** 프론트엔드와 백엔드 간에 공유할 수 있는 `FileDTO` 등의 인터페이스를 명확히 정의한다.
+### 4. 로깅 시스템 (Logging System)
+- **백엔드 로그**: `logs/` 디렉토리에 날짜별로 애플리케이션 로그 저장.
+- **프론트엔드 로그**: 클라이언트 측 에러 및 정보를 백엔드로 전송하여 통합 관리.
+- **로그 자동 정리**: 오래된 로그 파일을 주기적으로 정리하는 스케줄러 동작.
 
------
+## 📂 프로젝트 구조 (Project Structure)
 
-## 3\. 📅 Phase-by-Phase Instruction Prompts
-
-*(Copy and paste these prompts sequentially to the AI)*
-
-### 🚀 Phase 1: Project Initialization & Layout
-
-**Prompt:**
-
-```markdown
-[Phase 1 Task]
-NestJS(Backend)와 Next.js(Frontend) 프로젝트의 기본 구조를 잡아줘.
-
-1. **Backend (NestJS):**
-   - Port: 4000
-   - Global Prefix: `/api`
-   - CORS: `http://localhost:3000` 허용
-   - `.env`를 통해 `ROOT_PATH`(파일 저장 루트)를 설정 가능하게 해줘.
-
-2. **Frontend (Next.js + MUI):**
-   - Next.js 14 App Router 기반으로 설정.
-   - MUI `ThemeRegistry`를 구성하여 SSR 스타일 깨짐 방지.
-   - **Layout:**
-     - Left: Sidebar (Navigation). 데스크탑에선 고정, 모바일에선 `Drawer`로 동작.
-     - Top: Header (AppBar).
-     - Center: Main Content.
-   - 모바일 반응형 처리를 위한 `useMediaQuery` 훅 사용 예시 포함.
+```
+NASWebTS/
+├── backend/                 # NestJS Backend Server
+│   ├── src/
+│   │   ├── auth/           # 인증 모듈 (Google, JWT)
+│   │   ├── files/          # 파일 시스템 관리 모듈
+│   │   ├── logs/           # 로그 처리 모듈
+│   │   ├── system/         # 시스템 설정 관리 모듈
+│   │   ├── tasks/          # 스케줄링 작업 (로그 정리)
+│   │   ├── users/          # 사용자 관리 모듈
+│   │   └── main.ts         # 앱 진입점
+│   ├── logs/               # 서버 로그 저장소
+│   └── .env                # 백엔드 환경 변수
+│
+├── frontend/                # Next.js Frontend Client
+│   ├── app/                # App Router 페이지 (login, settings, recent 등)
+│   ├── components/         # 재사용 가능한 UI 컴포넌트 (FileExplorer, ThemeRegistry 등)
+│   ├── context/            # 전역 상태 관리 (AuthContext)
+│   ├── lib/                # 유틸리티 (api, logger)
+│   └── .env.local          # 프론트엔드 환경 변수
 ```
 
-### 📂 Phase 2: Backend File System Core
+## 🚀 설치 및 실행 (Setup & Run)
 
-**Prompt:**
+### 1. 환경 변수 설정
+각 폴더(`backend`, `frontend`)에 필요한 환경 변수 파일을 생성해야 합니다.
 
-```markdown
-[Phase 2 Task]
-NestJS에서 로컬 파일 시스템을 읽고 쓰는 `FileSystemService`를 구현해줘.
-
-1. **API Endpoints:**
-   - `GET /api/files?path=/`: 해당 경로의 파일/폴더 목록 반환 (이름, 타입, 크기, 수정일).
-   - `GET /api/files/download?path=/...`: 파일 다운로드 (StreamableFile 사용).
-
-2. **Security & OS Agnostic:**
-   - `path.resolve`와 `path.normalize`를 사용하여 `Path Traversal` 공격을 막는 검증 로직(`validatePath`)을 반드시 구현해.
-   - 윈도우와 리눅스 어디서든 경로가 깨지지 않게 `path` 모듈을 철저히 사용해.
+**Backend (`backend/.env`)**
+```env
+PORT=4000
+FRONTEND_URL=http://localhost:3000
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+GOOGLE_CALLBACK_URL=http://localhost:4000/auth/google/callback
+JWT_SECRET=your_jwt_secret
+ADMIN_EMAILS=admin@example.com
 ```
 
-### 🖥️ Phase 3: Frontend Explorer UI
-
-**Prompt:**
-
-```markdown
-[Phase 3 Task]
-Next.js와 MUI를 사용하여 파일 탐색기 UI를 구현해줘.
-
-1. **Component Structure:**
-   - `FileExplorer`: 메인 컴포넌트.
-   - `FileGridItem`: 파일/폴더 아이콘과 이름을 보여주는 카드 형태 컴포넌트.
-   - `BreadcrumbsNav`: 현재 경로를 표시하고 상위로 이동 가능한 내비게이션.
-
-2. **Logic:**
-   - `TanStack Query` (또는 SWR)를 사용하여 데이터를 페칭하고 캐싱해.
-   - 폴더 클릭 시 Query Param(`?path=...`)을 업데이트하여 내용을 갱신.
-   - 파일 클릭 시 다운로드 혹은 미리보기 트리거.
-   - 데이터 로딩 중에는 `Skeleton` UI 표시, 에러 시 `Snackbar` 표시.
+**Frontend (`frontend/.env.local`)**
+```env
+NEXT_PUBLIC_BACKEND_URL=http://localhost:4000
+PORT=3000
 ```
 
-### 📤 Phase 4: File Operations (Upload & Manage)
+### 2. 의존성 설치
+루트 디렉토리에서 각 프로젝트의 의존성을 설치합니다.
 
-**Prompt:**
+```bash
+# Backend
+cd backend
+npm install
 
-```markdown
-[Phase 4 Task]
-파일 업로드 및 관리 기능을 추가해줘.
-
-1. **Backend:**
-   - `POST /api/files/upload`: `Multer`를 사용하여 파일 업로드. (동일 이름 존재 시 자동 리네임 처리).
-   - `POST /api/files/mkdir`: 새 폴더 생성.
-   - `DELETE /api/files`: 파일/폴더 삭제.
-
-2. **Frontend:**
-   - `React Dropzone`을 사용하여 드래그 앤 드롭 업로드 구현.
-   - 업로드 진행 상태를 MUI `LinearProgress`로 표시.
-   - 파일 아이템에 우클릭 혹은 메뉴 버튼을 달아서 '삭제', '이름 변경' 옵션 제공.
-   - 삭제 시 `Dialog` 컴포넌트로 확인 팝업 띄우기.
+# Frontend
+cd ../frontend
+npm install
 ```
 
-### 🐳 Phase 5: Docker Deployment
+### 3. 실행
 
-**Prompt:**
-
-```markdown
-[Phase 5 Task]
-이 프로젝트를 OS 상관없이 배포하기 위한 Docker 설정을 작성해줘.
-
-1. **Requirements:**
-   - `Dockerfile`: Frontend(Next.js), Backend(NestJS) 각각 작성 (Multi-stage build로 용량 최적화).
-   - `docker-compose.yml`:
-     - 두 컨테이너를 동시에 실행.
-     - Host의 `./nas-storage` 폴더를 백엔드 컨테이너의 `/app/data`로 볼륨 마운트 (데이터 영속성 보장).
-     - 네트워크 설정으로 컨테이너 간 통신 연결.
+**Backend 실행**
+```bash
+cd backend
+npm run start:dev
 ```
 
------
+**Frontend 실행**
+```bash
+cd frontend
+npm run dev
+```
 
-## 4\. 📝 Tips for AI Interaction
-
-  * 코드가 길어지면 \*\*"파일별로 나누어서 코드를 작성해줘"\*\*라고 요청하세요.
-  * 에러가 발생하면 에러 로그를 그대로 복사해서 \*\*"이 에러의 원인과 해결 코드를 줘"\*\*라고 하세요.
-  * 디자인이 마음에 안 들면 \*\*"MUI 스타일을 좀 더 모던하게, 그림자 효과를 주고 간격을 넓혀줘"\*\*라고 구체적으로 지시하세요.
-
------
-
-## 5\. ✅ Implemented Features (Current Status)
-
-### 🎨 UI/UX
-- **Theme System:**
-  - Light / Dark / System 모드 지원.
-  - `next-themes` 기반의 테마 지속성 관리.
-- **File Explorer:**
-  - **Drag-to-Select:** 마우스 드래그를 통한 다중 파일 선택 기능 (Ctrl/Cmd 키 조합 지원).
-  - **View Modes:** Grid 뷰와 List 뷰 전환 지원.
-  - **Korean Support:** 한글 파일명 깨짐 방지 및 완벽 지원.
-  - **Interactions:** Hover 효과, 우클릭 메뉴, 더블 클릭 탐색.
-
-### 🛠 Backend & System
-- **File Operations:**
-  - Upload (Drag & Drop), Download, Rename, Delete.
-  - **Trash Bin:** 휴지통 기능 (복구/영구 삭제).
-  - **Recent Files:** 최근 접근/생성된 파일 목록.
-- **Logging & Maintenance:**
-  - **Winston Logger:** Frontend(Server-side) 및 Backend 로그 파일 저장 (`logs/` 디렉토리).
-  - **Auto Cleanup:** 스케줄러(Cron)를 통한 10일 이상 된 로그 파일 자동 삭제 (1시간 주기 점검).
+## 📝 라이선스
+This project is licensed under the UNLICENSED license.

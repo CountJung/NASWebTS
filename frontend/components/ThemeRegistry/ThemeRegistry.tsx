@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { Experimental_CssVarsProvider as CssVarsProvider } from '@mui/material/styles';
+import { CssVarsProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import NextAppDirEmotionCacheProvider from './EmotionCache';
 import { theme } from './theme';

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { styled, useTheme } from '@mui/material/styles';
+import { styled, useTheme, useColorScheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import AppBar from '@mui/material/AppBar';
@@ -31,7 +31,6 @@ import Button from '@mui/material/Button';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
-import { useColorMode } from '../ThemeRegistry/ColorModeContext';
 import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types/user';
 

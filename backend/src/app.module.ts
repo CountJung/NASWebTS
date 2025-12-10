@@ -12,6 +12,7 @@ import { LogCleanupService } from './tasks/log-cleanup.service';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { LogsModule } from './logs/logs.module';
+import { SystemModule } from './system/system.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { LogsModule } from './logs/logs.module';
     UsersModule,
     AuthModule,
     LogsModule,
+    SystemModule,
   ],
   controllers: [AppController],
   providers: [AppService, LogCleanupService],

@@ -6,14 +6,14 @@
     "picture": "https://lh3.googleusercontent.com/a/ACg8ocLTEUN7YE2xo2oSwSmvQWwWHInI_PYsvo1gtzWu6PYAmZjg7jyJ=s96-c",
     "role": "admin",
     "createdAt": "2025-12-10T02:42:29.439Z",
-    "lastLoginAt": "2025-12-10T03:11:46.801Z"
+    "lastLoginAt": "2025-12-10T06:58:07.233Z"
   },
   {
     "id": "105892681566107015246",
     "email": "countjung@gmail.com",
     "name": "SungJin Chung",
     "picture": "https://lh3.googleusercontent.com/a/ACg8ocJWXQv2MNhw1kAovesMZcq_lZ6PFQdv0_vZozK5qiinNJ5Urg=s96-c",
-    "role": "guest",
+    "role": "user",
     "createdAt": "2025-12-10T03:03:59.857Z",
     "lastLoginAt": "2025-12-10T03:04:27.320Z"
   }
