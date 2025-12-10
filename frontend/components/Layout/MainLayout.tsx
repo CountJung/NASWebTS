@@ -26,7 +26,14 @@ import SettingsBrightnessIcon from '@mui/icons-material/SettingsBrightness';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Tooltip from '@mui/material/Tooltip';
+import Avatar from '@mui/material/Avatar';
+import Button from '@mui/material/Button';
+import SettingsIcon from '@mui/icons-material/Settings';
+import LogoutIcon from '@mui/icons-material/Logout';
+import LoginIcon from '@mui/icons-material/Login';
 import { useColorMode } from '../ThemeRegistry/ColorModeContext';
+import { useAuth } from '../../context/AuthContext';
+import { UserRole } from '../../types/user';
 
 const drawerWidth = 240;
 
@@ -37,8 +44,15 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const { mode, setMode } = useColorMode();
+  const { user, login, logout } = useAuth();
+  
+  // Theme Menu State
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const openMenu = Boolean(anchorEl);
+
+  // User Menu State
+  const [userMenuAnchorEl, setUserMenuAnchorEl] = React.useState<null | HTMLElement>(null);
+  const openUserMenu = Boolean(userMenuAnchorEl);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -52,9 +66,27 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     setAnchorEl(null);
   };
 
+  const handleUserMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setUserMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setUserMenuAnchorEl(null);
+  };
+
   const handleModeChange = (newMode: 'light' | 'dark' | 'system') => {
     setMode(newMode);
     handleMenuClose();
+  };
+
+  const handleLogout = () => {
+    handleUserMenuClose();
+    logout();
+  };
+
+  const handleSettings = () => {
+    handleUserMenuClose();
+    router.push('/settings');
   };
 
   const getIcon = () => {
@@ -144,6 +176,65 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               System
             </MenuItem>
           </Menu>
+
+          {/* User Menu */}
+          {user ? (
+            <>
+              <Tooltip title="Account settings">
+                <IconButton
+                  onClick={handleUserMenuClick}
+                  size="small"
+                  sx={{ ml: 2 }}
+                  aria-controls={openUserMenu ? 'account-menu' : undefined}
+                  aria-haspopup="true"
+                  aria-expanded={openUserMenu ? 'true' : undefined}
+                >
+                  <Avatar sx={{ width: 32, height: 32 }} src={user.picture} alt={user.name}>
+                    {user.name ? user.name.charAt(0) : '?'}
+                  </Avatar>
+                </IconButton>
+              </Tooltip>
+              <Menu
+                anchorEl={userMenuAnchorEl}
+                id="account-menu"
+                open={openUserMenu}
+                onClose={handleUserMenuClose}
+                onClick={handleUserMenuClose}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              >
+                <MenuItem disabled>
+                  <Typography variant="body2" color="textSecondary">
+                    {user.name} ({user.role})
+                  </Typography>
+                </MenuItem>
+                <Divider />
+                {user.role === UserRole.ADMIN && (
+                  <MenuItem onClick={handleSettings}>
+                    <ListItemIcon>
+                      <SettingsIcon fontSize="small" />
+                    </ListItemIcon>
+                    Settings
+                  </MenuItem>
+                )}
+                <MenuItem onClick={handleLogout}>
+                  <ListItemIcon>
+                    <LogoutIcon fontSize="small" />
+                  </ListItemIcon>
+                  Logout
+                </MenuItem>
+              </Menu>
+            </>
+          ) : (
+            <Button 
+              color="inherit" 
+              startIcon={<LoginIcon />} 
+              onClick={login}
+              sx={{ ml: 1 }}
+            >
+              Login
+            </Button>
+          )}
         </Toolbar>
       </AppBar>
       

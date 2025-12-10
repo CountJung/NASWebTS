@@ -3,6 +3,7 @@ import "./globals.css";
 import ThemeRegistry from "@/components/ThemeRegistry/ThemeRegistry";
 import MainLayout from "@/components/Layout/MainLayout";
 import Providers from "./providers";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export const metadata: Metadata = {
   title: "Web NAS",
@@ -17,13 +18,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Providers>
-          <ThemeRegistry>
-            <MainLayout>
-              {children}
-            </MainLayout>
-          </ThemeRegistry>
-        </Providers>
+        <ErrorBoundary>
+          <Providers>
+            <ThemeRegistry>
+              <MainLayout>
+                {children}
+              </MainLayout>
+            </ThemeRegistry>
+          </Providers>
+        </ErrorBoundary>
       </body>
     </html>
   );

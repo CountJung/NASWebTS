@@ -1,10 +1,10 @@
-import cron from 'node-cron';
-import fs from 'fs';
-import path from 'path';
-import { logger } from './lib/logger';
-
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    const { default: cron } = await import('node-cron');
+    const { default: fs } = await import('fs');
+    const { default: path } = await import('path');
+    const { logger } = await import('./lib/logger');
+
     logger.info('Registering log cleanup cron job...');
     
     // Run every hour

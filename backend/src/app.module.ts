@@ -9,6 +9,9 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { FilesModule } from './files/files.module';
 import { LogCleanupService } from './tasks/log-cleanup.service';
+import { UsersModule } from './users/users.module';
+import { AuthModule } from './auth/auth.module';
+import { LogsModule } from './logs/logs.module';
 
 @Module({
   imports: [
@@ -60,6 +63,9 @@ import { LogCleanupService } from './tasks/log-cleanup.service';
       ],
     }),
     FilesModule,
+    UsersModule,
+    AuthModule,
+    LogsModule,
   ],
   controllers: [AppController],
   providers: [AppService, LogCleanupService],
