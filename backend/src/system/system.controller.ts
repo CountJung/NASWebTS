@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Query } from '@nestjs/common';
 import { SystemService } from './system.service';
 import { AuthGuard } from '@nestjs/passport';
 import { RolesGuard } from '../auth/roles.guard';
@@ -17,7 +17,26 @@ export class SystemController {
   }
 
   @Post('config')
-  updateConfig(@Body() body: { backendPort: string; frontendPort: string }) {
-    return this.systemService.updateConfig(body.backendPort, body.frontendPort);
+  updateConfig(
+    @Body()
+    body: {
+      backendPort?: string;
+      frontendPort?: string;
+      logCleanupIntervalHours?: string | number;
+      logRetentionDays?: string | number;
+    },
+  ) {
+    return this.systemService.updateConfig(body);
+  }
+
+  @Get('logs')
+  listLogs() {
+    return this.systemService.listLogFiles();
+  }
+
+  @Get('logs/content')
+  getLogContent(@Query('path') logPath: string, @Query('lines') lines?: string) {
+    const n = lines ? Number(lines) : 500;
+    return this.systemService.readLogTail(logPath, n);
   }
 }

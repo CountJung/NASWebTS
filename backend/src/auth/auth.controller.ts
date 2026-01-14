@@ -17,8 +17,17 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res) {
-    const { accessToken } = await this.authService.googleLogin(req);
     const frontendUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
-    res.redirect(`${frontendUrl}/auth/callback?token=${accessToken}`);
+
+    try {
+      const { accessToken } = await this.authService.googleLogin(req);
+      res.redirect(`${frontendUrl}/auth/callback?token=${accessToken}`);
+    } catch (e: any) {
+      if (e?.message === 'BANNED_USER') {
+        res.redirect(`${frontendUrl}/login?error=banned`);
+        return;
+      }
+      throw e;
+    }
   }
 }

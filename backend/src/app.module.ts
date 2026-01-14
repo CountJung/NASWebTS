@@ -13,6 +13,7 @@ import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { LogsModule } from './logs/logs.module';
 import { SystemModule } from './system/system.module';
+import { AuditModule } from './audit/audit.module';
 
 @Module({
   imports: [
@@ -68,6 +69,7 @@ import { SystemModule } from './system/system.module';
     AuthModule,
     LogsModule,
     SystemModule,
+    AuditModule,
   ],
   controllers: [AppController],
   providers: [AppService, LogCleanupService],

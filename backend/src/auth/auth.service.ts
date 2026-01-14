@@ -1,6 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
+import { UserRole } from '../users/user.interface';
 
 @Injectable()
 export class AuthService {
@@ -15,6 +16,10 @@ export class AuthService {
     }
 
     const user = await this.usersService.createOrUpdate(req.user);
+
+    if (user.role === UserRole.BANNED) {
+      throw new ForbiddenException('BANNED_USER');
+    }
     
     const payload = { email: user.email, sub: user.id, role: user.role };
     

@@ -19,6 +19,15 @@ yarn-debug.log*
 yarn-error.log*
 *.log
 
+# Runtime log directories
+backend/logs/
+backend/logs/**
+frontend/logs/
+frontend/logs/**
+
+# Runtime data (do not commit)
+backend/data/*.json
+
 # OS
 .DS_Store
 Thumbs.db

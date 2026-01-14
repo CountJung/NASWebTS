@@ -23,6 +23,8 @@ interface User {
 interface SystemConfig {
   backendPort: string;
   frontendPort: string;
+  logCleanupIntervalHours?: string;
+  logRetentionDays?: string;
 }
 
 function TabPanel(props: { children?: React.ReactNode; index: number; value: number }) {
@@ -54,7 +56,12 @@ export default function SettingsPage() {
   const [usersError, setUsersError] = useState('');
 
   // System Config State
-  const [config, setConfig] = useState<SystemConfig>({ backendPort: '', frontendPort: '' });
+  const [config, setConfig] = useState<SystemConfig>({
+    backendPort: '',
+    frontendPort: '',
+    logCleanupIntervalHours: '1',
+    logRetentionDays: '10',
+  });
   const [configLoading, setConfigLoading] = useState(false);
   const [configMessage, setConfigMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
@@ -237,6 +244,24 @@ export default function SettingsPage() {
               value={config.backendPort}
               onChange={(e) => setConfig({ ...config, backendPort: e.target.value })}
               helperText="Default: 4000"
+            />
+
+            <Typography variant="h6">Log Cleanup</Typography>
+            <TextField
+              label="Cleanup Interval (hours)"
+              type="number"
+              value={config.logCleanupIntervalHours || '1'}
+              onChange={(e) => setConfig({ ...config, logCleanupIntervalHours: e.target.value })}
+              helperText="Default: 1 (runs hourly, can skip based on interval)"
+              inputProps={{ min: 1, max: 168 }}
+            />
+            <TextField
+              label="Retention Days"
+              type="number"
+              value={config.logRetentionDays || '10'}
+              onChange={(e) => setConfig({ ...config, logRetentionDays: e.target.value })}
+              helperText="Default: 10"
+              inputProps={{ min: 1, max: 365 }}
             />
             <Button 
               variant="contained" 

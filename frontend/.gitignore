@@ -19,7 +19,9 @@
 
 # production
 /build
-
+#로그
+/logs/
+/logs/**
 # misc
 .DS_Store
 *.pem

@@ -9,7 +9,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: () => void;
-  logout: () => void;
+  logout: (redirectTo?: string) => void;
   checkAuth: () => Promise<void>;
 }
 
@@ -55,10 +55,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     router.push('/login');
   }, [router]);
 
-  const logout = useCallback(() => {
+  const logout = useCallback((redirectTo: string = '/login') => {
     localStorage.removeItem('accessToken');
     setUser(null);
-    router.push('/');
+    router.push(redirectTo);
   }, [router]);
 
   return (

@@ -29,6 +29,7 @@ import Tooltip from '@mui/material/Tooltip';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
 import SettingsIcon from '@mui/icons-material/Settings';
+import ArticleIcon from '@mui/icons-material/Article';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
 import { useAuth } from '../../context/AuthContext';
@@ -43,7 +44,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const { mode, setMode } = useColorScheme();
-  const { user, login, logout } = useAuth();
+  const { user, loading, login, logout } = useAuth();
   
   // Theme Menu State
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
@@ -88,6 +89,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     router.push('/settings');
   };
 
+  const handleLogs = () => {
+    handleUserMenuClose();
+    router.push('/admin/logs');
+  };
+
   const getIcon = () => {
     if (mode === 'dark') return <Brightness4Icon />;
     if (mode === 'light') return <Brightness7Icon />;
@@ -99,6 +105,22 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     { text: 'Recent', icon: <AccessTimeIcon />, path: '/recent' },
     { text: 'Trash', icon: <DeleteIcon />, path: '/trash' },
   ];
+
+  const publicPaths = ['/login', '/auth/callback'];
+
+  React.useEffect(() => {
+    if (loading) return;
+
+    if (user?.role === UserRole.BANNED) {
+      logout('/login?error=banned');
+      return;
+    }
+
+    const isPublic = publicPaths.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+    if (!user && !isPublic) {
+      logout(`/login?redirect=${encodeURIComponent(pathname || '/')}`);
+    }
+  }, [loading, user, pathname, logout]);
 
   const drawerContent = (
     <div>
@@ -214,6 +236,14 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                       <SettingsIcon fontSize="small" />
                     </ListItemIcon>
                     Settings
+                  </MenuItem>
+                )}
+                {user.role === UserRole.ADMIN && (
+                  <MenuItem onClick={handleLogs}>
+                    <ListItemIcon>
+                      <ArticleIcon fontSize="small" />
+                    </ListItemIcon>
+                    Logs
                   </MenuItem>
                 )}
                 <MenuItem onClick={handleLogout}>
