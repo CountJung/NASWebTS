@@ -67,7 +67,7 @@ export default function FileGridItem({
     onSelect(file, event.ctrlKey || event.metaKey);
   };
 
-  const handleDoubleClick = (event: React.MouseEvent) => {
+  const handleDoubleClick = () => {
     onNavigate(file);
   };
 
@@ -102,7 +102,7 @@ export default function FileGridItem({
     >
       <Checkbox
         checked={selected}
-        onChange={(e) => onSelect(file, true)}
+        onChange={() => onSelect(file, true)}
         onClick={(e) => e.stopPropagation()}
         sx={{ 
           position: 'absolute', 

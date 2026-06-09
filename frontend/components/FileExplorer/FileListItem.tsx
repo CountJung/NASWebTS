@@ -68,7 +68,7 @@ export default function FileListItem({
     onSelect(file, event.ctrlKey || event.metaKey);
   };
 
-  const handleDoubleClick = (event: React.MouseEvent) => {
+  const handleDoubleClick = () => {
     onNavigate(file);
   };
 
@@ -90,7 +90,7 @@ export default function FileListItem({
         <Checkbox
           color="primary"
           checked={selected}
-          onChange={(e) => {
+          onChange={() => {
             // Checkbox click always toggles, but we treat it as multi-select add/remove usually
             // Or we can just let the row click handle it. 
             // If we click checkbox specifically, we probably want to toggle without clearing others?

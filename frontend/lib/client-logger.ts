@@ -6,7 +6,19 @@ interface LogData {
   url?: string;
   userAgent?: string;
   user?: string;
-  [key: string]: any;
+  [key: string]: unknown;
+}
+
+function serializeError(error: unknown): string {
+  if (error instanceof Error) {
+    return error.stack || error.message;
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
 }
 
 class ClientLogger {
@@ -22,7 +34,7 @@ class ClientLogger {
       // Use sendBeacon if available for better reliability on page unload
       // But for general logging, axios is fine. 
       // We use api instance to reuse base URL configuration
-      api.post(`/logs/${level}`, payload).catch(err => {
+      api.post(`/logs/${level}`, payload).catch((err: unknown) => {
         console.error('Failed to send log to backend', err);
       });
     } catch (e) {
@@ -30,16 +42,16 @@ class ClientLogger {
     }
   }
 
-  error(message: string, error?: any, user?: string) {
+  error(message: string, error?: unknown, user?: string) {
     console.error(message, error);
     this.logToBackend('error', {
       message,
-      stack: error?.stack || JSON.stringify(error),
+      stack: serializeError(error),
       user,
     });
   }
 
-  info(message: string, data?: any, user?: string) {
+  info(message: string, data?: unknown, user?: string) {
     console.log(message, data);
     this.logToBackend('info', {
       message,

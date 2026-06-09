@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { 
   Box, Typography, Table, TableBody, TableCell, TableContainer, 
   TableHead, TableRow, Paper, Select, MenuItem, IconButton,
-  useTheme, useMediaQuery, Card, CardContent, Stack, Chip,
+  useTheme, useMediaQuery, Card, CardContent, Stack,
   Tabs, Tab, TextField, Button, Alert, CircularProgress
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -77,7 +77,7 @@ export default function SettingsPage() {
     try {
       const response = await api.get('/users');
       setUsers(response.data);
-    } catch (err) {
+    } catch {
       setUsersError('Failed to fetch users. You might not be an admin.');
     } finally {
       setUsersLoading(false);
@@ -88,8 +88,8 @@ export default function SettingsPage() {
     try {
       const response = await api.get('/system/config');
       setConfig(response.data);
-    } catch (err) {
-      console.error('Failed to fetch system config', err);
+    } catch (error) {
+      console.error('Failed to fetch system config', error);
     }
   };
 
@@ -97,7 +97,7 @@ export default function SettingsPage() {
     try {
       await api.patch(`/users/${id}/role`, { role: newRole });
       setUsers(users.map(u => u.id === id ? { ...u, role: newRole } : u));
-    } catch (err) {
+    } catch {
       alert('Failed to update role');
     }
   };
@@ -107,7 +107,7 @@ export default function SettingsPage() {
     try {
       await api.delete(`/users/${id}`);
       setUsers(users.filter(u => u.id !== id));
-    } catch (err) {
+    } catch {
       alert('Failed to delete user');
     }
   };
@@ -118,7 +118,7 @@ export default function SettingsPage() {
     try {
       await api.post('/system/config', config);
       setConfigMessage({ type: 'success', text: 'Configuration saved. Please restart the servers to apply changes.' });
-    } catch (err) {
+    } catch {
       setConfigMessage({ type: 'error', text: 'Failed to save configuration.' });
     } finally {
       setConfigLoading(false);
@@ -126,6 +126,7 @@ export default function SettingsPage() {
   };
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    void event;
     setTabValue(newValue);
   };
 

@@ -60,7 +60,7 @@ export default function AdminLogsPage() {
       if (!selected && res.data.length > 0) {
         setSelected(res.data[0].path);
       }
-    } catch (e: any) {
+    } catch {
       setError('로그 파일 목록을 불러오지 못했습니다. (관리자 권한/백엔드 상태 확인)');
     } finally {
       setLoadingFiles(false);
@@ -76,7 +76,7 @@ export default function AdminLogsPage() {
         params: { path: logPath, lines: tailLines },
       });
       setContent(res.data.content || '');
-    } catch (e: any) {
+    } catch {
       setError('로그 내용을 불러오지 못했습니다.');
     } finally {
       setLoadingContent(false);

@@ -39,6 +39,23 @@ interface FileExplorerProps {
   mode?: 'files' | 'recent' | 'trash';
 }
 
+function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (
+    typeof error === 'object' &&
+    error !== null &&
+    'response' in error &&
+    typeof (error as { response?: { data?: { message?: unknown } } }).response?.data?.message === 'string'
+  ) {
+    return (error as { response: { data: { message: string } } }).response.data.message;
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
+}
+
 export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -111,8 +128,8 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['files', mode, currentPath] });
     },
-    onError: (error: any) => {
-      setErrorMessage(error.response?.data?.message || 'Failed to create folder');
+    onError: (error: unknown) => {
+      setErrorMessage(getApiErrorMessage(error, 'Failed to create folder'));
       setErrorOpen(true);
     },
   });
@@ -142,8 +159,8 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
         return next;
       });
     },
-    onError: (error: any) => {
-      setErrorMessage(error.response?.data?.message || 'Failed to delete file');
+    onError: (error: unknown) => {
+      setErrorMessage(getApiErrorMessage(error, 'Failed to delete file'));
       setErrorOpen(true);
     },
   });
@@ -165,8 +182,8 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
       queryClient.invalidateQueries({ queryKey: ['files', mode, currentPath] });
       setSelectedFiles(new Set());
     },
-    onError: (error: any) => {
-      setErrorMessage(error.response?.data?.message || 'Failed to delete some files');
+    onError: (error: unknown) => {
+      setErrorMessage(getApiErrorMessage(error, 'Failed to delete some files'));
       setErrorOpen(true);
     }
   });
@@ -181,8 +198,8 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
       setRenameDialogOpen(false);
       setFileToRename(null);
     },
-    onError: (error: any) => {
-      setErrorMessage(error.response?.data?.message || 'Failed to rename file');
+    onError: (error: unknown) => {
+      setErrorMessage(getApiErrorMessage(error, 'Failed to rename file'));
       setErrorOpen(true);
     },
   });
@@ -194,8 +211,8 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['files', mode, currentPath] });
     },
-    onError: (error: any) => {
-      setErrorMessage(error.response?.data?.message || 'Failed to restore file');
+    onError: (error: unknown) => {
+      setErrorMessage(getApiErrorMessage(error, 'Failed to restore file'));
       setErrorOpen(true);
     },
   });
@@ -209,8 +226,8 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
       queryClient.invalidateQueries({ queryKey: ['files', mode, currentPath] });
       setSelectedFiles(new Set());
     },
-    onError: (error: any) => {
-      setErrorMessage(error.response?.data?.message || 'Failed to restore some files');
+    onError: (error: unknown) => {
+      setErrorMessage(getApiErrorMessage(error, 'Failed to restore some files'));
       setErrorOpen(true);
     }
   });
@@ -235,9 +252,9 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
       queryClient.invalidateQueries({ queryKey: ['files', mode, currentPath] });
       setUploadProgress(null);
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       setUploadProgress(null);
-      setErrorMessage(error.response?.data?.message || 'Failed to upload file');
+      setErrorMessage(getApiErrorMessage(error, 'Failed to upload file'));
       setErrorOpen(true);
     },
   });
@@ -413,18 +430,14 @@ export default function FileExplorer({ mode = 'files' }: FileExplorerProps) {
     }
   };
 
-  const { ref: dropzoneRef, ...rootProps } = getRootProps({
+  const rootProps = getRootProps({
     onMouseDown: handleDragMouseDown
-  }) as any;
+  });
 
   return (
     <Box 
       {...rootProps}
-      ref={(node: HTMLDivElement | null) => {
-        containerRef.current = node;
-        if (typeof dropzoneRef === 'function') dropzoneRef(node);
-        else if (dropzoneRef) (dropzoneRef as any).current = node;
-      }}
+      ref={containerRef}
       sx={{ minHeight: 'calc(100vh - 100px)', position: 'relative' }}
     >
       <input {...getInputProps()} />

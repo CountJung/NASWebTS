@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { styled, useTheme, useColorScheme } from '@mui/material/styles';
+import { useTheme, useColorScheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import AppBar from '@mui/material/AppBar';
@@ -36,6 +36,7 @@ import { useAuth } from '../../context/AuthContext';
 import { UserRole } from '../../types/user';
 
 const drawerWidth = 240;
+const publicPaths = ['/login', '/auth/callback'];
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const theme = useTheme();
@@ -105,8 +106,6 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     { text: 'Recent', icon: <AccessTimeIcon />, path: '/recent' },
     { text: 'Trash', icon: <DeleteIcon />, path: '/trash' },
   ];
-
-  const publicPaths = ['/login', '/auth/callback'];
 
   React.useEffect(() => {
     if (loading) return;
